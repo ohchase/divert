@@ -263,7 +263,7 @@ impl<'a> PolygonTriangleIterator<'a> {
         vertices: &'a [DtVector],
         details_vert_base: usize,
         detail_vertices: &'a [DtVector],
-    ) -> &DtVector {
+    ) -> &'a DtVector {
         if vertice_index < vertice_indexes.len() {
             let vertice_index = vertice_indexes[vertice_index] as usize;
             &vertices[vertice_index]
@@ -360,7 +360,7 @@ impl Polygon {
     ) -> impl Iterator<Item = Triangle<'b>> {
         let details = self.details(tile);
         let tri_flags = details.tris(tile.detail_tris());
-        let details_vert_base = details.vert_base() as usize;
+        let details_vert_base = details.vert_base();
 
         PolygonTriangleIterator {
             tri_flags,
