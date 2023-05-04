@@ -220,14 +220,14 @@ pub struct MeshTile {
 
 impl MeshTile {
     pub fn bv_node_count(&self) -> i32 {
-        unsafe { (*(*self.handle).header).bv_node_count }
+        unsafe { (*(*self.handle).header).bvNodeCount }
     }
 
     pub fn vertices(&self) -> &[Vector] {
         unsafe {
             std::slice::from_raw_parts(
                 (*self.handle).verts,
-                (*(*self.handle).header).vert_count.try_into().unwrap(),
+                (*(*self.handle).header).vertCount.try_into().unwrap(),
             )
         }
     }
@@ -235,11 +235,8 @@ impl MeshTile {
     pub fn detail_meshes(&self) -> &[dtPolyDetail] {
         unsafe {
             std::slice::from_raw_parts(
-                (*self.handle).detail_meshes,
-                (*(*self.handle).header)
-                    .detail_mesh_count
-                    .try_into()
-                    .unwrap(),
+                (*self.handle).detailMeshes,
+                (*(*self.handle).header).detailMeshCount.try_into().unwrap(),
             )
         }
     }
@@ -247,11 +244,8 @@ impl MeshTile {
     pub fn detail_vertices(&self) -> &[Vector] {
         unsafe {
             std::slice::from_raw_parts(
-                (*self.handle).detail_verts,
-                (*(*self.handle).header)
-                    .detail_vert_count
-                    .try_into()
-                    .unwrap(),
+                (*self.handle).detailVerts,
+                (*(*self.handle).header).detailVertCount.try_into().unwrap(),
             )
         }
     }
@@ -259,11 +253,8 @@ impl MeshTile {
     pub fn detail_tris(&self) -> &[DtDetailTri] {
         unsafe {
             std::slice::from_raw_parts(
-                (*self.handle).detail_tris,
-                (*(*self.handle).header)
-                    .detail_tri_count
-                    .try_into()
-                    .unwrap(),
+                (*self.handle).detailTris,
+                (*(*self.handle).header).detailTriCount.try_into().unwrap(),
             )
         }
     }
@@ -284,19 +275,19 @@ pub struct PolygonDetail {
 
 impl PolygonDetail {
     fn vert_base(&self) -> usize {
-        unsafe { (*self.handle).vert_base as usize }
+        unsafe { (*self.handle).vertBase as usize }
     }
 
     fn tri_base(&self) -> usize {
-        unsafe { (*self.handle).tri_base as usize }
+        unsafe { (*self.handle).triBase as usize }
     }
 
     fn vert_count(&self) -> usize {
-        unsafe { (*self.handle).vert_base as usize }
+        unsafe { (*self.handle).vertBase as usize }
     }
 
     fn tri_count(&self) -> usize {
-        unsafe { (*self.handle).tri_count as usize }
+        unsafe { (*self.handle).triCount as usize }
     }
 
     pub fn tris<'a>(&self, detail_tris: &'a [DtDetailTri]) -> &'a [DtDetailTri] {
@@ -413,7 +404,7 @@ impl Polygon {
     }
 
     fn vert_count(&self) -> usize {
-        unsafe { (*self.handle).vert_count as usize }
+        unsafe { (*self.handle).vertCount as usize }
     }
 
     fn vertice_indexes(&self) -> &[u16] {
