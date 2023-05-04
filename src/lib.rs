@@ -517,7 +517,7 @@ impl NavMesh {
     /// Allocates and initializes a dtNavMesh for NavMesh to handle
     /// Errors if allocation returns a null pointer, or the dtNavMesh->init function returns a failed status
     pub fn new(nav_mesh_params: &NavMeshParams) -> DivertResult<Self> {
-        let dt_nav_mesh = unsafe { dtNavMesh_alloc() };
+        let dt_nav_mesh = unsafe { dtAllocNavMesh() };
 
         if dt_nav_mesh.is_null() {
             return Err(DivertError::NullPtr());
@@ -569,7 +569,7 @@ impl NavMesh {
     /// Allocates and initializes a dtNavMeshQuery for NavMeshQuery to handle
     /// Errors if allocation returns a null pointer, or the dtNavMeshQuery->init function returns a failed status
     pub fn create_query<'b>(&self, max_nodes: i32) -> DivertResult<NavMeshQuery<'b>> {
-        let dt_nav_mesh_query = unsafe { dtNavMeshQuery_alloc() };
+        let dt_nav_mesh_query = unsafe { dtAllocNavMeshQuery() };
 
         if dt_nav_mesh_query.is_null() {
             return Err(DivertError::NullPtr());
@@ -598,7 +598,7 @@ impl NavMesh {
 impl Drop for NavMesh {
     /// Frees dtNavMesh resources with dtFreeNavMesh
     fn drop(&mut self) {
-        unsafe { dtNavMesh_free(self.handle) }
+        unsafe { dtFreeNavMesh(self.handle) }
     }
 }
 
@@ -1096,7 +1096,7 @@ impl<'a> NavMeshQuery<'a> {
 impl<'a> Drop for NavMeshQuery<'a> {
     /// Frees dtNavMeshQuery resources with dtFreeNavMeshQuery
     fn drop(&mut self) {
-        unsafe { dtNavMeshQuery_free(self.handle) }
+        unsafe { dtFreeNavMeshQuery(self.handle) }
     }
 }
 
