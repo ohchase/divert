@@ -1,11 +1,8 @@
-mod binding;
-
 use std::{
     marker,
     ops::{Add, Mul, Sub},
 };
 
-use binding::*;
 use bitflags::bitflags;
 use thiserror::Error;
 
@@ -178,10 +175,10 @@ impl NavMeshParams {
 
 /// New Type to DdPolyRef
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
-pub struct PolyRef(DtPolyRef);
+pub struct PolyRef(dtPolyRef);
 
 impl std::ops::Deref for PolyRef {
-    type Target = DtPolyRef;
+    type Target = dtPolyRef;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -196,10 +193,10 @@ impl std::ops::DerefMut for PolyRef {
 
 /// New Type to dtTileRef
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
-pub struct TileRef(DtTileRef);
+pub struct TileRef(dtTileRef);
 
 impl std::ops::Deref for TileRef {
-    type Target = DtTileRef;
+    type Target = dtTileRef;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -218,7 +215,7 @@ pub struct DtDetailTri(pub [u8; 4]);
 
 /// New Type to dtMeshTile
 pub struct MeshTile {
-    handle: *const DtMeshTile,
+    handle: *const dtMeshTile,
 }
 
 impl MeshTile {
@@ -226,7 +223,7 @@ impl MeshTile {
         unsafe { (*(*self.handle).header).bv_node_count }
     }
 
-    pub fn vertices(&self) -> &[DtVector] {
+    pub fn vertices(&self) -> &[Vector] {
         unsafe {
             std::slice::from_raw_parts(
                 (*self.handle).verts,
@@ -235,7 +232,7 @@ impl MeshTile {
         }
     }
 
-    pub fn detail_meshes(&self) -> &[DtPolyDetail] {
+    pub fn detail_meshes(&self) -> &[dtPolyDetail] {
         unsafe {
             std::slice::from_raw_parts(
                 (*self.handle).detail_meshes,
@@ -247,7 +244,7 @@ impl MeshTile {
         }
     }
 
-    pub fn detail_vertices(&self) -> &[DtVector] {
+    pub fn detail_vertices(&self) -> &[Vector] {
         unsafe {
             std::slice::from_raw_parts(
                 (*self.handle).detail_verts,
@@ -274,15 +271,15 @@ impl MeshTile {
 
 #[derive(Debug)]
 pub struct Triangle<'a> {
-    pub a: &'a DtVector,
-    pub b: &'a DtVector,
-    pub c: &'a DtVector,
+    pub a: &'a Vector,
+    pub b: &'a Vector,
+    pub c: &'a Vector,
     pub flag: u8,
 }
 
 /// New Type to dtPolyDetail
 pub struct PolygonDetail {
-    handle: *const DtPolyDetail,
+    handle: *const dtPolyDetail,
 }
 
 impl PolygonDetail {
@@ -308,7 +305,7 @@ impl PolygonDetail {
         &detail_tris[tri_base..tri_base + tri_count]
     }
 
-    pub fn vertices<'a>(&self, detail_vertices: &'a [DtVector]) -> &'a [DtVector] {
+    pub fn vertices<'a>(&self, detail_vertices: &'a [Vector]) -> &'a [Vector] {
         let vert_base = self.vert_base();
         let vert_count = self.vert_count();
         &detail_vertices[vert_base..vert_base + vert_count]
@@ -317,15 +314,15 @@ impl PolygonDetail {
 
 /// New Type to dtPolygon
 pub struct Polygon {
-    handle: *const DtPoly,
+    handle: *const dtPoly,
 }
 
 struct PolygonTriangleIterator<'a> {
     tri_flags: &'a [DtDetailTri],
     vertice_indexes: &'a [u16],
-    vertices: &'a [DtVector],
+    vertices: &'a [Vector],
     details_vert_base: usize,
-    detail_vertices: &'a [DtVector],
+    detail_vertices: &'a [Vector],
     index: usize,
 }
 
@@ -333,10 +330,10 @@ impl<'a> PolygonTriangleIterator<'a> {
     fn map_tri(
         vertice_index: usize,
         vertice_indexes: &'a [u16],
-        vertices: &'a [DtVector],
+        vertices: &'a [Vector],
         details_vert_base: usize,
-        detail_vertices: &'a [DtVector],
-    ) -> &'a DtVector {
+        detail_vertices: &'a [Vector],
+    ) -> &'a Vector {
         if vertice_index < vertice_indexes.len() {
             let vertice_index = vertice_indexes[vertice_index] as usize;
             &vertices[vertice_index]
@@ -390,13 +387,13 @@ impl<'a> Iterator for PolygonTriangleIterator<'a> {
 }
 
 struct PolygonVerticeIterator<'a> {
-    vertices: &'a [DtVector],
+    vertices: &'a [Vector],
     vertice_indexes: &'a [u16],
     index: usize,
 }
 
 impl<'a> Iterator for PolygonVerticeIterator<'a> {
-    type Item = &'a DtVector;
+    type Item = &'a Vector;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index == self.vertice_indexes.len() {
@@ -445,7 +442,7 @@ impl Polygon {
         }
     }
 
-    pub fn vertices_iter<'b>(&'b self, tile: &'b MeshTile) -> impl Iterator<Item = &'b DtVector> {
+    pub fn vertices_iter<'b>(&'b self, tile: &'b MeshTile) -> impl Iterator<Item = &'b Vector> {
         PolygonVerticeIterator {
             vertices: tile.vertices(),
             vertice_indexes: self.vertice_indexes(),
@@ -464,7 +461,7 @@ impl Polygon {
 /// Safe bindings to dtNavMesh
 /// Handles life time of the dtNavMesh and will release resources when dropped
 pub struct NavMesh {
-    handle: *mut DtNavMesh,
+    handle: *mut dtNavMesh,
 }
 
 unsafe impl Send for NavMesh {}
@@ -498,7 +495,7 @@ impl NavMesh {
         ))
     }
 
-    pub fn calc_tile_location(&self, position: &DtVector) -> (i32, i32) {
+    pub fn calc_tile_location(&self, position: &Vector) -> (i32, i32) {
         unsafe {
             let mut tile_x: i32 = -1;
             let mut tile_y: i32 = -1;
@@ -507,7 +504,7 @@ impl NavMesh {
         }
     }
 
-    pub fn get_poly_ref_base(&self, tile: &DtMeshTile) -> Option<DtPolyRef> {
+    pub fn get_poly_ref_base(&self, tile: &dtMeshTile) -> Option<dtPolyRef> {
         unsafe {
             let poly_ref = dtNavMesh_getPolyRefBase(self.handle, tile);
             match dtNavMesh_isValidPolyRef(self.handle, poly_ref) {
@@ -517,7 +514,7 @@ impl NavMesh {
         }
     }
 
-    pub fn get_tile_at(&self, tile_x: i32, tile_y: i32, layer: i32) -> Option<&DtMeshTile> {
+    pub fn get_tile_at(&self, tile_x: i32, tile_y: i32, layer: i32) -> Option<&dtMeshTile> {
         unsafe { dtNavMesh_getTileAt(self.handle, tile_x, tile_y, layer).as_ref() }
     }
 
@@ -633,8 +630,8 @@ impl QueryFilter {
 /// Safe bindings to dtNavMeshQuery
 /// Handles life time of the dtNavMeshQuery and will release resources when dropped
 pub struct NavMeshQuery<'a> {
-    handle: *mut DtNavMeshQuery,
-    _phantom: marker::PhantomData<&'a DtNavMeshQuery>,
+    handle: *mut dtNavMeshQuery,
+    _phantom: marker::PhantomData<&'a dtNavMeshQuery>,
 }
 
 unsafe impl Send for NavMeshQuery<'_> {}
@@ -644,7 +641,7 @@ impl<'a> NavMeshQuery<'a> {
     pub fn find_polys_around_circle(
         &self,
         start_ref: PolyRef,
-        center: &DtVector,
+        center: &Vector,
         radius: f32,
         filter: &QueryFilter,
         max_result: usize,
@@ -662,8 +659,8 @@ impl<'a> NavMeshQuery<'a> {
                 center,
                 radius,
                 &filter.0,
-                result_refs.as_mut_ptr() as *mut DtPolyRef,
-                result_parents.as_mut_ptr() as *mut DtPolyRef,
+                result_refs.as_mut_ptr() as *mut dtPolyRef,
+                result_parents.as_mut_ptr() as *mut dtPolyRef,
                 result_costs.as_mut_ptr(),
                 &mut result_count,
                 max_result.try_into().unwrap(),
@@ -695,16 +692,16 @@ impl<'a> NavMeshQuery<'a> {
         &self,
         frand: extern "C" fn() -> f32,
         filter: &QueryFilter,
-    ) -> DivertResult<(PolyRef, DtVector)> {
+    ) -> DivertResult<(PolyRef, Vector)> {
         unsafe {
             let mut output_poly_ref = PolyRef::default();
-            let mut output_point = DtVector::default();
+            let mut output_point = Vector::default();
 
             let random_point_status = dtNavMeshQuery_findRandomPoint(
                 self.handle,
                 &filter.0,
                 frand,
-                &mut output_poly_ref as *mut _ as *mut DtPolyRef,
+                &mut output_poly_ref as *mut _ as *mut dtPolyRef,
                 &mut output_point,
             );
 
@@ -718,7 +715,7 @@ impl<'a> NavMeshQuery<'a> {
 
     /// Queries for polygon height given the reference polygon and position on the polygon
     /// Errors if ffi function returns a failed DtStatus
-    pub fn get_poly_height(&self, poly_ref: PolyRef, position: &DtVector) -> DivertResult<f32> {
+    pub fn get_poly_height(&self, poly_ref: PolyRef, position: &Vector) -> DivertResult<f32> {
         let mut height: f32 = 0.0;
 
         let get_poly_height_status =
@@ -835,7 +832,7 @@ impl<'a> NavMeshQuery<'a> {
                 start_pos,
                 end_pos,
                 &filter.0,
-                path.as_mut_ptr() as *mut DtPolyRef,
+                path.as_mut_ptr() as *mut dtPolyRef,
                 &mut path_count,
                 path.capacity().try_into().unwrap(),
             )
@@ -874,7 +871,7 @@ impl<'a> NavMeshQuery<'a> {
                 start_pos,
                 end_pos,
                 &filter.0,
-                path.as_mut_ptr() as *mut DtPolyRef,
+                path.as_mut_ptr() as *mut dtPolyRef,
                 &mut path_count,
                 max_path,
             )
@@ -893,15 +890,15 @@ impl<'a> NavMeshQuery<'a> {
 
     #[allow(clippy::too_many_arguments)]
     /// Generates a (poly, position) path from on (poly, position) to another (poly, position)
-    /// Uses a user provided DtVector Vec, DtStraightPathFlags Vec, and PolyRef Vec
-    /// Max Path length is derived from the user provided DtVector Vec's capacity
+    /// Uses a user provided Vector Vec, DtStraightPathFlags Vec, and PolyRef Vec
+    /// Max Path length is derived from the user provided Vector Vec's capacity
     /// Errors if ffi function returns a failed DtStatus
     pub fn find_straight_path_inplace(
         &self,
         start_pos: &Vector,
         end_pos: &Vector,
         poly_path: &[PolyRef],
-        straight_path_points: &mut Vec<DtVector>,
+        straight_path_points: &mut Vec<Vector>,
         straight_path_flags: &mut Vec<DtStraightPathFlags>,
         straight_path_polys: &mut Vec<PolyRef>,
         options: i32,
@@ -913,11 +910,11 @@ impl<'a> NavMeshQuery<'a> {
                 self.handle,
                 start_pos,
                 end_pos,
-                poly_path.as_ptr() as *const DtPolyRef,
+                poly_path.as_ptr() as *const dtPolyRef,
                 poly_path.len().try_into().unwrap(),
                 straight_path_points.as_mut_ptr(),
                 straight_path_flags.as_mut_ptr(),
-                straight_path_polys.as_mut_ptr() as *mut DtPolyRef,
+                straight_path_polys.as_mut_ptr() as *mut dtPolyRef,
                 &mut straight_path_count,
                 straight_path_points.capacity().try_into().unwrap(),
                 options,
@@ -949,7 +946,7 @@ impl<'a> NavMeshQuery<'a> {
         options: i32,
     ) -> DivertResult<Vec<(Vector, DtStraightPathFlags, PolyRef)>> {
         let mut straight_path_count = 0;
-        let mut straight_path_points: Vec<DtVector> =
+        let mut straight_path_points: Vec<Vector> =
             Vec::with_capacity(max_path.try_into().unwrap());
         let mut straight_path_flags: Vec<DtStraightPathFlags> =
             Vec::with_capacity(max_path.try_into().unwrap());
@@ -961,11 +958,11 @@ impl<'a> NavMeshQuery<'a> {
                 self.handle,
                 start_pos,
                 end_pos,
-                poly_path.as_ptr() as *const DtPolyRef,
+                poly_path.as_ptr() as *const dtPolyRef,
                 poly_path.len().try_into().unwrap(),
                 straight_path_points.as_mut_ptr(),
                 straight_path_flags.as_mut_ptr(),
-                straight_path_polys.as_mut_ptr() as *mut DtPolyRef,
+                straight_path_polys.as_mut_ptr() as *mut dtPolyRef,
                 &mut straight_path_count,
                 max_path,
                 options,
@@ -1021,7 +1018,7 @@ impl<'a> NavMeshQuery<'a> {
                 end_pos,
                 &filter.0,
                 result_pos,
-                visited.as_mut_ptr() as *mut DtPolyRef,
+                visited.as_mut_ptr() as *mut dtPolyRef,
                 &mut visited_count,
                 visited.capacity().try_into().unwrap(),
             )
@@ -1062,7 +1059,7 @@ impl<'a> NavMeshQuery<'a> {
                 end_pos,
                 &filter.0,
                 &mut result_pos,
-                visited.as_mut_ptr() as *mut DtPolyRef,
+                visited.as_mut_ptr() as *mut dtPolyRef,
                 &mut visited_count,
                 max_visit,
             )
