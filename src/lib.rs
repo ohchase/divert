@@ -436,15 +436,14 @@ impl Polygon {
 
 /// Safe bindings to dtNavMesh
 /// Handles life time of the dtNavMesh and will release resources when dropped
-pub struct NavMesh<'a> {
+pub struct NavMesh {
     handle: *mut DtNavMesh,
-    _phantom: marker::PhantomData<&'a DtNavMesh>,
 }
 
-unsafe impl Send for NavMesh<'_> {}
+unsafe impl Send for NavMesh {}
 
 /// Provides functionality to interact with NavMesh and its underlying dtNavMesh
-impl<'a> NavMesh<'a> {
+impl NavMesh {
     pub fn get_tile_and_poly_by_ref(&self, poly_ref: PolyRef) -> DivertResult<(MeshTile, Polygon)> {
         let mut output_tile = std::ptr::null();
         let mut output_poly = std::ptr::null();
@@ -511,7 +510,6 @@ impl<'a> NavMesh<'a> {
 
         Ok(Self {
             handle: dt_nav_mesh,
-            _phantom: marker::PhantomData,
         })
     }
 
@@ -566,7 +564,7 @@ impl<'a> NavMesh<'a> {
 
 /// Handles freeing the inner dtNavMesh
 /// subsequently handles freeing the tile data added to this NavMesh
-impl<'a> Drop for NavMesh<'a> {
+impl Drop for NavMesh {
     /// Frees dtNavMesh resources with dtFreeNavMesh
     fn drop(&mut self) {
         unsafe { dtNavMesh_free(self.handle) }
