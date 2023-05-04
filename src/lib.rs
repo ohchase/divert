@@ -464,12 +464,12 @@ impl NavMesh {
         let mut output_poly = std::ptr::null();
 
         let status = unsafe {
-            dtNavMesh_getTileAndPolyByRef(
+            DtStatus::from_bits_unchecked(dtNavMesh_getTileAndPolyByRef(
                 self.handle,
                 *poly_ref,
                 &mut output_tile,
                 &mut output_poly,
-            )
+            ))
         };
 
         if status.is_failed() {
@@ -518,8 +518,12 @@ impl NavMesh {
             return Err(DivertError::NullPtr());
         }
 
-        let init_status =
-            unsafe { dtNavMesh_init(dt_nav_mesh, &nav_mesh_params.to_detour_params()) };
+        let init_status = unsafe {
+            DtStatus::from_bits_unchecked(dtNavMesh_init(
+                dt_nav_mesh,
+                &nav_mesh_params.to_detour_params(),
+            ))
+        };
         if init_status.is_failed() {
             return Err(DivertError::Failure(init_status));
         }
@@ -539,14 +543,14 @@ impl NavMesh {
 
         let mut tile_ref = TileRef::default();
         let add_tile_status = unsafe {
-            dtNavMesh_addTile(
+            DtStatus::from_bits_unchecked(dtNavMesh_addTile(
                 self.handle,
                 data,
                 data_size as i32,
                 1,
                 *TileRef::default(),
                 &mut *tile_ref,
-            )
+            ))
         };
 
         if add_tile_status.is_failed() {
@@ -566,7 +570,13 @@ impl NavMesh {
             return Err(DivertError::NullPtr());
         }
 
-        let init_status = unsafe { dtNavMeshQuery_init(dt_nav_mesh_query, self.handle, max_nodes) };
+        let init_status = unsafe {
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_init(
+                dt_nav_mesh_query,
+                self.handle,
+                max_nodes,
+            ))
+        };
         if init_status.is_failed() {
             return Err(DivertError::Failure(init_status));
         }
@@ -644,7 +654,7 @@ impl<'a> NavMeshQuery<'a> {
         let mut result_count = 0;
 
         let status = unsafe {
-            dtNavMeshQuery_findPolysAroundCircle(
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_findPolysAroundCircle(
                 self.handle,
                 *start_ref,
                 center,
@@ -655,7 +665,7 @@ impl<'a> NavMeshQuery<'a> {
                 result_costs.as_mut_ptr(),
                 &mut result_count,
                 max_result.try_into().unwrap(),
-            )
+            ))
         };
 
         if status.is_failed() {
@@ -688,13 +698,14 @@ impl<'a> NavMeshQuery<'a> {
             let mut output_poly_ref = PolyRef::default();
             let mut output_point = Vector::default();
 
-            let random_point_status = dtNavMeshQuery_findRandomPoint(
-                self.handle,
-                &filter.0,
-                frand,
-                &mut output_poly_ref as *mut _ as *mut dtPolyRef,
-                &mut output_point,
-            );
+            let random_point_status =
+                DtStatus::from_bits_unchecked(dtNavMeshQuery_findRandomPoint(
+                    self.handle,
+                    &filter.0,
+                    frand,
+                    &mut output_poly_ref as *mut _ as *mut dtPolyRef,
+                    &mut output_point,
+                ));
 
             if random_point_status.is_failed() {
                 return Err(DivertError::FindRandomPoint(random_point_status));
@@ -709,8 +720,14 @@ impl<'a> NavMeshQuery<'a> {
     pub fn get_poly_height(&self, poly_ref: PolyRef, position: &Vector) -> DivertResult<f32> {
         let mut height: f32 = 0.0;
 
-        let get_poly_height_status =
-            unsafe { dtNavMeshQuery_getPolyHeight(self.handle, *poly_ref, position, &mut height) };
+        let get_poly_height_status = unsafe {
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_getPolyHeight(
+                self.handle,
+                *poly_ref,
+                position,
+                &mut height,
+            ))
+        };
 
         if get_poly_height_status.is_failed() {
             return Err(DivertError::GetPolyHeightFailure(get_poly_height_status));
@@ -731,14 +748,14 @@ impl<'a> NavMeshQuery<'a> {
         let mut nearest_ref = PolyRef::default();
 
         let nearest_status = unsafe {
-            dtNavMeshQuery_findNearestPoly(
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_findNearestPoly(
                 self.handle,
                 center,
                 extents,
                 &filter.0,
                 &mut *nearest_ref,
                 &mut closest_point,
-            )
+            ))
         };
 
         if nearest_status.is_failed() {
@@ -759,13 +776,13 @@ impl<'a> NavMeshQuery<'a> {
         let mut position_over_poly = false;
 
         let nearest_status = unsafe {
-            dtNavMeshQuery_closestPointOnPoly(
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_closestPointOnPoly(
                 self.handle,
                 *poly_ref,
                 position,
                 &mut closest_point,
                 &mut position_over_poly,
-            )
+            ))
         };
 
         if nearest_status.is_failed() {
@@ -785,12 +802,12 @@ impl<'a> NavMeshQuery<'a> {
         let mut closest_point = Vector::default();
 
         let dt_result = unsafe {
-            dtNavMeshQuery_closestPointOnPolyBoundary(
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_closestPointOnPolyBoundary(
                 self.handle,
                 *poly_ref,
                 position,
                 &mut closest_point,
-            )
+            ))
         };
 
         if dt_result.is_failed() {
@@ -816,7 +833,7 @@ impl<'a> NavMeshQuery<'a> {
         let mut path_count = 0;
 
         let find_path_status = unsafe {
-            dtNavMeshQuery_findPath(
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_findPath(
                 self.handle,
                 *start_ref,
                 *end_ref,
@@ -826,7 +843,7 @@ impl<'a> NavMeshQuery<'a> {
                 path.as_mut_ptr() as *mut dtPolyRef,
                 &mut path_count,
                 path.capacity().try_into().unwrap(),
-            )
+            ))
         };
 
         unsafe {
@@ -855,7 +872,7 @@ impl<'a> NavMeshQuery<'a> {
         let mut path: Vec<PolyRef> = Vec::with_capacity(max_path.try_into().unwrap());
 
         let find_path_status = unsafe {
-            dtNavMeshQuery_findPath(
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_findPath(
                 self.handle,
                 *start_ref,
                 *end_ref,
@@ -865,7 +882,7 @@ impl<'a> NavMeshQuery<'a> {
                 path.as_mut_ptr() as *mut dtPolyRef,
                 &mut path_count,
                 max_path,
-            )
+            ))
         };
 
         unsafe {
@@ -897,7 +914,7 @@ impl<'a> NavMeshQuery<'a> {
         let mut straight_path_count = 0;
 
         let find_path_status = unsafe {
-            dtNavMeshQuery_findStraightPath(
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_findStraightPath(
                 self.handle,
                 start_pos,
                 end_pos,
@@ -909,7 +926,7 @@ impl<'a> NavMeshQuery<'a> {
                 &mut straight_path_count,
                 straight_path_points.capacity().try_into().unwrap(),
                 options,
-            )
+            ))
         };
 
         if find_path_status.is_failed() {
@@ -945,7 +962,7 @@ impl<'a> NavMeshQuery<'a> {
             Vec::with_capacity(max_path.try_into().unwrap());
 
         let straight_path_status = unsafe {
-            dtNavMeshQuery_findStraightPath(
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_findStraightPath(
                 self.handle,
                 start_pos,
                 end_pos,
@@ -957,7 +974,7 @@ impl<'a> NavMeshQuery<'a> {
                 &mut straight_path_count,
                 max_path,
                 options,
-            )
+            ))
         };
 
         if straight_path_status.is_failed() {
@@ -1002,7 +1019,7 @@ impl<'a> NavMeshQuery<'a> {
         let mut visited_count = 0;
 
         let move_along_surface_result = unsafe {
-            dtNavMeshQuery_moveAlongSurface(
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_moveAlongSurface(
                 self.handle,
                 *start_ref,
                 start_pos,
@@ -1012,7 +1029,7 @@ impl<'a> NavMeshQuery<'a> {
                 visited.as_mut_ptr() as *mut dtPolyRef,
                 &mut visited_count,
                 visited.capacity().try_into().unwrap(),
-            )
+            ))
         };
 
         unsafe {
@@ -1043,7 +1060,7 @@ impl<'a> NavMeshQuery<'a> {
         let mut result_pos = Vector::default();
 
         let move_along_surface_result = unsafe {
-            dtNavMeshQuery_moveAlongSurface(
+            DtStatus::from_bits_unchecked(dtNavMeshQuery_moveAlongSurface(
                 self.handle,
                 *start_ref,
                 start_pos,
@@ -1053,7 +1070,7 @@ impl<'a> NavMeshQuery<'a> {
                 visited.as_mut_ptr() as *mut dtPolyRef,
                 &mut visited_count,
                 max_visit,
-            )
+            ))
         };
 
         unsafe {
