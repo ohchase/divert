@@ -35,10 +35,6 @@ pub struct DtPolyDetail {
 
 #[repr(C)]
 #[derive(Debug)]
-pub struct DtDetailTri(pub [u8; 4]);
-
-#[repr(C)]
-#[derive(Debug)]
 pub struct DtBVNode {
     pub b_min: [f32; 3],
     pub b_max: [f32; 3],

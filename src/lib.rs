@@ -212,6 +212,10 @@ impl std::ops::DerefMut for TileRef {
     }
 }
 
+#[repr(C)]
+#[derive(Debug)]
+pub struct DtDetailTri(pub [u8; 4]);
+
 /// New Type to dtMeshTile
 pub struct MeshTile {
     handle: *const DtMeshTile,
