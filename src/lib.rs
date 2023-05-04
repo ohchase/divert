@@ -155,9 +155,26 @@ impl Mul<f32> for Vector {
     }
 }
 
-/// Typedef to DtNavMeshParams
-/// Affords the ability in future to add custom functionality
-pub type NavMeshParams = DtNavMeshParams;
+#[derive(Debug)]
+pub struct NavMeshParams {
+    pub origin: [f32; 3],
+    pub tile_width: f32,
+    pub tile_height: f32,
+    pub max_tiles: i32,
+    pub max_polys: i32,
+}
+
+impl NavMeshParams {
+    fn to_detour_params(&self) -> dtNavMeshParams {
+        dtNavMeshParams {
+            orig: self.origin,
+            tileWidth: self.tile_width,
+            tileHeight: self.tile_height,
+            maxTiles: self.max_tiles,
+            maxPolys: self.max_polys,
+        }
+    }
+}
 
 /// New Type to DdPolyRef
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
@@ -509,7 +526,8 @@ impl NavMesh {
             return Err(DivertError::NullPtr());
         }
 
-        let init_status = unsafe { dtNavMesh_init(dt_nav_mesh, nav_mesh_params) };
+        let init_status =
+            unsafe { dtNavMesh_init(dt_nav_mesh, &nav_mesh_params.to_detour_params()) };
         if init_status.is_failed() {
             return Err(DivertError::Failure(init_status));
         }

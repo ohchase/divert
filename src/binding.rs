@@ -78,16 +78,6 @@ pub struct DtMeshTile {
 
 #[repr(C)]
 #[derive(Debug)]
-pub struct DtNavMeshParams {
-    pub origin: [f32; 3],
-    pub tile_width: f32,
-    pub tile_height: f32,
-    pub max_tiles: i32,
-    pub max_polys: i32,
-}
-
-#[repr(C)]
-#[derive(Debug)]
 pub struct DtMeshHeader {
     pub magic: i32,
     pub version: i32,
