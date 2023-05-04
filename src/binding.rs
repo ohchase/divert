@@ -1,5 +1,3 @@
-use bitflags::bitflags;
-
 pub type DtTileRef = u64;
 
 pub type DtPolyRef = u64;
@@ -126,63 +124,6 @@ pub enum DtNavMesh {}
 pub enum DtNavMeshQuery {}
 
 pub enum DtQueryFilter {}
-
-// High level status.
-pub const DT_FAILURE: u32 = 1 << 31; // Operation failed.
-pub const DT_SUCCESS: u32 = 1 << 30; // Operation succeed.
-pub const DT_IN_PROGRESS: u32 = 1 << 29; // Operation still in progress.
-
-// Detail information for status.
-// pub const DT_STATUS_DETAIL_MASK: u32 = 0x0ffffff;
-pub const DT_WRONG_MAGIC: u32 = 1 << 0; // Input data is not recognized.
-pub const DT_WRONG_VERSION: u32 = 1 << 1; // Input data is in wrong version.
-pub const DT_OUT_OF_MEMORY: u32 = 1 << 2; // Operation ran out of memory.
-pub const DT_INVALID_PARAM: u32 = 1 << 3; // An input parameter was invalid.
-pub const DT_BUFFER_TOO_SMALL: u32 = 1 << 4; // Result buffer for the query was too small to store all results.
-pub const DT_OUT_OF_NODES: u32 = 1 << 5; // Query ran out of nodes during search.
-pub const DT_PARTIAL_RESULT: u32 = 1 << 6; // Query did not reach the end location, returning best guess.
-pub const DT_ALREADY_OCCUPIED: u32 = 1 << 7; // A tile has already been assigned to the given x,y coordinate
-
-bitflags! {
-    #[repr(C)]
-    pub struct DtStatus: u32 {
-        const SUCCESS = DT_SUCCESS;
-        const IN_PROGRESS = DT_IN_PROGRESS;
-        const FAILURE = DT_FAILURE;
-
-        const WRONG_MAGIC = DT_WRONG_MAGIC;
-        const WRONG_VERSION = DT_WRONG_VERSION;
-        const OUT_OF_MEMORY = DT_OUT_OF_MEMORY;
-        const INVALID_PARAM = DT_INVALID_PARAM;
-        const BUFFER_TOO_SMALL = DT_BUFFER_TOO_SMALL;
-        const OUT_OF_NODES = DT_OUT_OF_NODES;
-        const PARTIAL_RESULT = DT_PARTIAL_RESULT;
-        const ALREADY_OCCUPIED = DT_ALREADY_OCCUPIED;
-    }
-}
-
-impl DtStatus {
-    pub fn is_success(&self) -> bool {
-        self.contains(DtStatus::SUCCESS)
-    }
-
-    pub fn is_in_progress(&self) -> bool {
-        self.contains(DtStatus::IN_PROGRESS)
-    }
-
-    pub fn is_failed(&self) -> bool {
-        self.contains(DtStatus::FAILURE)
-    }
-}
-
-bitflags! {
-    #[repr(transparent)]
-    pub struct DtStraightPathFlags: u8 {
-        const START = 0x01;
-        const END = 0x02;
-        const OFFMESH_CONNECTION = 0x03;
-    }
-}
 
 #[link(name = "detour", kind = "static")]
 extern "C" {

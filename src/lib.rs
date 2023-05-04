@@ -5,11 +5,57 @@ use std::{
     ops::{Add, Mul, Sub},
 };
 
-pub use binding::DtStatus;
-pub use binding::DtStraightPathFlags;
-
 use binding::*;
+use bitflags::bitflags;
 use thiserror::Error;
+
+use recastnavigation_sys::*;
+
+bitflags! {
+    #[repr(C)]
+    pub struct DtStatus: dtStatus {
+        // High level status.
+        const SUCCESS = DT_SUCCESS; // Operation failed.
+        const IN_PROGRESS = DT_IN_PROGRESS; // Operation succeed.
+        const FAILURE = DT_FAILURE; // Operation still in progress.
+
+        // Detail information for status.
+        const WRONG_MAGIC = DT_WRONG_MAGIC; // Input data is not recognized.
+        const WRONG_VERSION = DT_WRONG_VERSION; // Input data is in wrong version.
+        const OUT_OF_MEMORY = DT_OUT_OF_MEMORY; // Operation ran out of memory.
+        const INVALID_PARAM = DT_INVALID_PARAM; // An input parameter was invalid.
+        const BUFFER_TOO_SMALL = DT_BUFFER_TOO_SMALL; // Result buffer for the query was too small to store all results.
+        const OUT_OF_NODES = DT_OUT_OF_NODES; // Query ran out of nodes during search.
+        const PARTIAL_RESULT = DT_PARTIAL_RESULT; // Query did not reach the end location, returning best guess.
+        const ALREADY_OCCUPIED = DT_ALREADY_OCCUPIED; // A tile has already been assigned to the given x,y coordinate
+    }
+}
+
+impl DtStatus {
+    pub fn is_success(&self) -> bool {
+        self.contains(DtStatus::SUCCESS)
+    }
+
+    pub fn is_in_progress(&self) -> bool {
+        self.contains(DtStatus::IN_PROGRESS)
+    }
+
+    pub fn is_failed(&self) -> bool {
+        self.contains(DtStatus::FAILURE)
+    }
+}
+
+// The flags for points in a "straight path".
+// Note: recastnavigation-sys generates either i32 or u32 for enums, but dtStraightPathFlags are
+// generally taken as u8.
+bitflags! {
+    #[repr(transparent)]
+    pub struct DtStraightPathFlags: u8 {
+        const START = dtStraightPathFlags_DT_STRAIGHTPATH_START as _;
+        const END = dtStraightPathFlags_DT_STRAIGHTPATH_END as _;
+        const OFFMESH_CONNECTION = dtStraightPathFlags_DT_STRAIGHTPATH_OFFMESH_CONNECTION as _;
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum DivertError {
