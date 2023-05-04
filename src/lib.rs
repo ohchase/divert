@@ -574,59 +574,33 @@ impl<'a> Drop for NavMesh<'a> {
 }
 
 /// Safe bindings to dtQueryFilter
-/// Handles life time of the dtQueryFilter and will release resources when dropped
-pub struct QueryFilter<'a> {
-    handle: *mut DtQueryFilter,
-    _phantom: marker::PhantomData<&'a DtQueryFilter>,
-}
-
-unsafe impl Send for QueryFilter<'_> {}
+pub struct QueryFilter(dtQueryFilter);
 
 /// Provides functionality to interact with QueryFilter and its underlying dtQueryFilter
-impl<'a> QueryFilter<'a> {
-    /// Allocates a dtQueryFilter
-    /// Errors if the allocation returns a null pointer
-    pub fn new() -> DivertResult<Self> {
-        let dt_query_filter = unsafe { dtQueryFilter_alloc() };
-        if dt_query_filter.is_null() {
-            Err(DivertError::NullPtr())
-        } else {
-            Ok(Self {
-                handle: dt_query_filter,
-                _phantom: marker::PhantomData,
-            })
-        }
+impl QueryFilter {
+    // Create a new QueryFilter.
+    pub fn new() -> Self {
+        Self(unsafe { dtQueryFilter::new() })
     }
 
     /// Sets the filter's include flags
     pub fn set_include_flags(&mut self, include_flags: u16) {
-        unsafe {
-            dtQueryFilter_setIncludeFlags(self.handle, include_flags);
-        }
+        self.0.m_includeFlags = include_flags;
     }
 
     /// Retrieves the filter's include flags
     pub fn get_include_flags(&self) -> u16 {
-        unsafe { dtQueryFilter_getIncludeFlags(self.handle) }
+        self.0.m_includeFlags
     }
 
     /// Sets the filter's exclude flags
     pub fn set_exclude_flags(&mut self, exclude_flags: u16) {
-        unsafe {
-            dtQueryFilter_setExcludeFlags(self.handle, exclude_flags);
-        }
+        self.0.m_excludeFlags = exclude_flags;
     }
 
     /// Retrieves the filter's exclude flags
     pub fn get_exclude_flags(&self) -> u16 {
-        unsafe { dtQueryFilter_getExcludeFlags(self.handle) }
-    }
-}
-
-/// Handles freeing the inner dtQueryFilter
-impl<'a> Drop for QueryFilter<'a> {
-    fn drop(&mut self) {
-        unsafe { dtQueryFilter_free(self.handle) }
+        self.0.m_excludeFlags
     }
 }
 
@@ -661,7 +635,7 @@ impl<'a> NavMeshQuery<'a> {
                 *start_ref,
                 center,
                 radius,
-                filter.handle,
+                &filter.0,
                 result_refs.as_mut_ptr() as *mut DtPolyRef,
                 result_parents.as_mut_ptr() as *mut DtPolyRef,
                 result_costs.as_mut_ptr(),
@@ -702,7 +676,7 @@ impl<'a> NavMeshQuery<'a> {
 
             let random_point_status = dtNavMeshQuery_findRandomPoint(
                 self.handle,
-                filter.handle,
+                &filter.0,
                 frand,
                 &mut output_poly_ref as *mut _ as *mut DtPolyRef,
                 &mut output_point,
@@ -747,7 +721,7 @@ impl<'a> NavMeshQuery<'a> {
                 self.handle,
                 center,
                 extents,
-                filter.handle,
+                &filter.0,
                 &mut *nearest_ref,
                 &mut closest_point,
             )
@@ -834,7 +808,7 @@ impl<'a> NavMeshQuery<'a> {
                 *end_ref,
                 start_pos,
                 end_pos,
-                filter.handle,
+                &filter.0,
                 path.as_mut_ptr() as *mut DtPolyRef,
                 &mut path_count,
                 path.capacity().try_into().unwrap(),
@@ -873,7 +847,7 @@ impl<'a> NavMeshQuery<'a> {
                 *end_ref,
                 start_pos,
                 end_pos,
-                filter.handle,
+                &filter.0,
                 path.as_mut_ptr() as *mut DtPolyRef,
                 &mut path_count,
                 max_path,
@@ -1019,7 +993,7 @@ impl<'a> NavMeshQuery<'a> {
                 *start_ref,
                 start_pos,
                 end_pos,
-                filter.handle,
+                &filter.0,
                 result_pos,
                 visited.as_mut_ptr() as *mut DtPolyRef,
                 &mut visited_count,
@@ -1060,7 +1034,7 @@ impl<'a> NavMeshQuery<'a> {
                 *start_ref,
                 start_pos,
                 end_pos,
-                filter.handle,
+                &filter.0,
                 &mut result_pos,
                 visited.as_mut_ptr() as *mut DtPolyRef,
                 &mut visited_count,
@@ -1128,10 +1102,7 @@ mod tests {
 
     #[test]
     fn test_query_filter() {
-        let filter = QueryFilter::new();
-        assert!(filter.is_ok());
-
-        let mut filter = filter.unwrap();
+        let mut filter = QueryFilter::new();
 
         filter.set_include_flags(1);
         assert_eq!(filter.get_include_flags(), 1);

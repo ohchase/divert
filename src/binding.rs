@@ -159,13 +159,6 @@ extern "C" {
     ) -> DtStatus;
     pub fn dtNavMesh_free(_self: *mut DtNavMesh);
 
-    pub fn dtQueryFilter_alloc() -> *mut DtQueryFilter;
-    pub fn dtQueryFilter_free(_self: *mut DtQueryFilter);
-    pub fn dtQueryFilter_setIncludeFlags(_self: *mut DtQueryFilter, include_flags: u16);
-    pub fn dtQueryFilter_getIncludeFlags(_self: *const DtQueryFilter) -> u16;
-    pub fn dtQueryFilter_setExcludeFlags(_self: *mut DtQueryFilter, exclude_flags: u16);
-    pub fn dtQueryFilter_getExcludeFlags(_self: *const DtQueryFilter) -> u16;
-
     pub fn dtNavMeshQuery_alloc() -> *mut DtNavMeshQuery;
     pub fn dtNavMeshQuery_init(
         _self: *mut DtNavMeshQuery,
