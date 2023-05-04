@@ -92,7 +92,13 @@ pub type DivertResult<T> = std::result::Result<T, DivertError>;
 /// 3D Vector used in Recast Navigation, correspond to a [f32; 3]
 /// This abstraction is provided to combat misunderstanding of point ordering
 /// Recast expects y, z, x ordering while many applications use x, y, z ordering
-pub type Vector = DtVector;
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct Vector {
+    pub y: f32,
+    pub z: f32,
+    pub x: f32,
+}
 
 /// Provides functionality to initialize Vectors compatible with Recast
 /// Additionally provides basic math functions used with 3D Vectors

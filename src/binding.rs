@@ -3,14 +3,6 @@ pub type DtTileRef = u64;
 pub type DtPolyRef = u64;
 
 #[repr(C)]
-#[derive(Debug, Clone, Copy, Default, PartialEq)]
-pub struct DtVector {
-    pub y: f32,
-    pub z: f32,
-    pub x: f32,
-}
-
-#[repr(C)]
 #[derive(Debug)]
 pub struct DtPoly {
     pub first_link: u32,
