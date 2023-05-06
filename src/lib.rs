@@ -633,6 +633,12 @@ impl QueryFilter {
     }
 }
 
+impl Default for QueryFilter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Safe bindings to dtNavMeshQuery
 /// Handles life time of the dtNavMeshQuery and will release resources when dropped
 pub struct NavMeshQuery<'a> {
