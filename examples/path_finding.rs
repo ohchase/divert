@@ -88,13 +88,13 @@ impl Default for PathFindingSettings {
     }
 }
 
-struct TrinityNavEngine<'a> {
-    nav_mesh: NavMesh<'a>,
+struct TrinityNavEngine {
+    nav_mesh: NavMesh,
     data_provider: Box<dyn DataProvider>,
     loaded_tiles: HashSet<u32>,
 }
 
-impl<'a> TrinityNavEngine<'a> {
+impl TrinityNavEngine {
     pub fn new(data_provider: Box<dyn DataProvider>) -> Result<Self, Box<dyn Error>> {
         let map_params = data_provider.read_map_params()?;
         let nav_mesh = NavMesh::new(&map_params)?;
@@ -141,7 +141,7 @@ impl<'a> TrinityNavEngine<'a> {
 }
 
 lazy_static::lazy_static! {
-    static ref NAV_ENGINE: Mutex<TrinityNavEngine<'static>> = Mutex::new(
+    static ref NAV_ENGINE: Mutex<TrinityNavEngine> = Mutex::new(
         TrinityNavEngine::new(Box::new(TrinityDataProvider { map_id: 530 }))
         .expect("Unable to initialize global navigation engine, example resources not available."));
 }
@@ -162,12 +162,12 @@ type NavigationResult<T> = std::result::Result<T, NavigationError>;
 
 struct TrinityNavigator<'a> {
     query: NavMeshQuery<'a>,
-    query_filter: QueryFilter<'a>,
+    query_filter: QueryFilter,
     settings: PathFindingSettings,
 }
 
 impl<'a> TrinityNavigator<'a> {
-    fn new(query_filter: QueryFilter<'a>) -> DivertResult<Self> {
+    fn new(query_filter: QueryFilter) -> DivertResult<Self> {
         let nav_engine = NAV_ENGINE
             .lock()
             .expect("Global Nav Engine Mutex has been poisoned");
@@ -405,7 +405,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .filter_level(LevelFilter::Info)
         .init();
 
-    let mut query_filter = QueryFilter::new()?;
+    let mut query_filter = QueryFilter::new();
     query_filter.set_include_flags(1 | 8 | 4 | 2);
     query_filter.set_exclude_flags(0);
 
