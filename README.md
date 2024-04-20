@@ -1,30 +1,20 @@
-[![Actions Status](https://github.com/0xFounders/divert/workflows/Continuous%20integration/badge.svg)](https://github.com/0xFounders/divert/actions)
+[![Actions Status](https://github.com/ohchase/divert/workflows/Continuous%20integration/badge.svg)](https://github.com/ohchase/divert/actions)
 [![Crate](https://img.shields.io/crates/v/divert.svg)](https://crates.io/crates/divert)
 
 # Divert
 Rust bindings for [Recast Navigation](https://github.com/recastnavigation/recastnavigation).
 
-
 ## Purpose
 Provide safe bindings to [Recast Navigation](https://github.com/recastnavigation/recastnavigation) to allow for 3d navigation in a rust application.
 
-## Overview
-### `src/extern.cpp`
-C function definitions wrapping Detour C++ Functions.
-### `src/binding.rs`
-Rust bindings to the C functions exposed in `src/extern.cpp`.
-### `src/lib.rs`
-Safe Rust abstractions of Detour components e.g ensuring correct freeing of DtNavMesh and DtNavMeshQuery.
-
 ## How to Build
 ```
-git clone --recurse-submodules https://github.com/0xFounders/divert.git
+git clone --recurse-submodules https://github.com/ohchase/divert.git
 cargo build
 ```
 
 ## Use Case
 Refer to `examples/pathfinding.rs` for a demonstration of loading geometry generated with [Trinity Core](https://github.com/TrinityCore/TrinityCore). In the below, Proof of Concept, section the paths generated are projected to in-game space. In this repository the resources for generating paths is provided, but drawing/projecting points in the game is not in scope of this project. No questions or issues should be opened requesting help or information about video game specific applications.
-
 
 ```
 cargo run --example path_finding
@@ -40,10 +30,3 @@ cargo run --example path_finding
  INFO  path_finding > DtVector { y: 4354.9106, z: 3.0870965, x: -2051.213 }
  INFO  path_finding > DtVector { y: 4356.881, z: 2.9974942, x: -2050.8694 }
 ```
-
-## Proof Of Concept
-Demonstration of my independent work using this library to generate navigation paths in a third party video game.
-
-![Navigation Demo 1](resources/docs/demo_nav.PNG)
-
-![Navigation Demo 2](resources/docs/demo_nav_2.PNG)

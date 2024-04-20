@@ -1,11 +1,8 @@
 use byteorder::{LittleEndian, ReadBytesExt};
-use log::{info, LevelFilter};
-
 use divert::{
     DivertError, DivertResult, DtStraightPathFlags, NavMesh, NavMeshParams, NavMeshQuery, PolyRef,
     QueryFilter, TileRef, Vector,
 };
-use rand::Rng;
 use thiserror::Error;
 
 use std::{
@@ -14,20 +11,13 @@ use std::{
     error::Error,
     fs::File,
     io::{self, Read, Seek, SeekFrom},
-    sync::Mutex,
 };
-
-trait DataProvider: Send + Sync {
-    fn read_map_params(&self) -> io::Result<NavMeshParams>;
-
-    fn read_tile_data(&self, tile_x: &i32, tile_y: &i32) -> io::Result<Vec<u8>>;
-}
 
 struct TrinityDataProvider {
     map_id: i32,
 }
 
-impl DataProvider for TrinityDataProvider {
+impl TrinityDataProvider {
     fn read_map_params(&self) -> io::Result<NavMeshParams> {
         let mut map_params_file =
             File::open(format!("resources/geometry/{:03}.mmap", self.map_id))?;
@@ -90,12 +80,12 @@ impl Default for PathFindingSettings {
 
 struct TrinityNavEngine {
     nav_mesh: NavMesh,
-    data_provider: Box<dyn DataProvider>,
+    data_provider: TrinityDataProvider,
     loaded_tiles: HashSet<u32>,
 }
 
 impl TrinityNavEngine {
-    pub fn new(data_provider: Box<dyn DataProvider>) -> Result<Self, Box<dyn Error>> {
+    pub fn new(data_provider: TrinityDataProvider) -> Result<Self, Box<dyn Error>> {
         let map_params = data_provider.read_map_params()?;
         let nav_mesh = NavMesh::new(&map_params)?;
 
@@ -121,7 +111,7 @@ impl TrinityNavEngine {
 
     pub fn add_tile(&mut self, tile_x: &i32, tile_y: &i32) -> DivertResult<TileRef> {
         if self.has_tile(tile_x, tile_y) {
-            info!(
+            println!(
                 "[NavEngine] Add tile called for already loaded tile ({}, {})",
                 tile_x, tile_y
             );
@@ -130,7 +120,7 @@ impl TrinityNavEngine {
             return Ok(TileRef::default());
         }
 
-        info!("[NavEngine] Adding tile ({}, {})", tile_x, tile_y);
+        println!("[NavEngine] Adding tile ({}, {})", tile_x, tile_y);
         let tile_ref = self
             .nav_mesh
             .add_tile(self.data_provider.read_tile_data(tile_x, tile_y).unwrap())?;
@@ -138,12 +128,6 @@ impl TrinityNavEngine {
             .insert(Self::packed_tile_id(tile_x, tile_y));
         Ok(tile_ref)
     }
-}
-
-lazy_static::lazy_static! {
-    static ref NAV_ENGINE: Mutex<TrinityNavEngine> = Mutex::new(
-        TrinityNavEngine::new(Box::new(TrinityDataProvider { map_id: 530 }))
-        .expect("Unable to initialize global navigation engine, example resources not available."));
 }
 
 #[derive(Error, Debug)]
@@ -159,7 +143,6 @@ enum NavigationError {
 }
 
 type NavigationResult<T> = std::result::Result<T, NavigationError>;
-
 struct TrinityNavigator<'a> {
     query: NavMeshQuery<'a>,
     query_filter: QueryFilter,
@@ -167,12 +150,7 @@ struct TrinityNavigator<'a> {
 }
 
 impl<'a> TrinityNavigator<'a> {
-    fn new(query_filter: QueryFilter) -> DivertResult<Self> {
-        let nav_engine = NAV_ENGINE
-            .lock()
-            .expect("Global Nav Engine Mutex has been poisoned");
-        let query = nav_engine.create_query(2048)?;
-
+    fn initialize(query: NavMeshQuery<'a>, query_filter: QueryFilter) -> DivertResult<Self> {
         Ok(Self {
             query,
             query_filter,
@@ -286,6 +264,7 @@ impl<'a> TrinityNavigator<'a> {
         Ok(None)
     }
 
+    /// Try to find a smooth path with available tiles
     fn find_smooth_path(
         &self,
         start_pos: &Vector,
@@ -357,26 +336,16 @@ impl<'a> TrinityNavigator<'a> {
         Ok(smooth_path)
     }
 
+    /// Try to find a path without loading any tiles
     pub fn find_path(
         &self,
         input_start: &Vector,
         input_end: &Vector,
     ) -> NavigationResult<Vec<Vector>> {
-        log::info!(
+        println!(
             "[TrinityNavigator] Generating path from {:?} to {:?}",
-            input_start,
-            input_end
+            input_start, input_end
         );
-
-        {
-            let nav_engine = &mut NAV_ENGINE
-                .lock()
-                .expect("Global Nav Engine Mutex has been poisoned");
-            let start_tile = Self::world_to_trinity(input_start.x, input_start.y);
-            let end_tile = Self::world_to_trinity(input_end.x, input_end.y);
-            nav_engine.add_tile(&start_tile.0, &start_tile.1)?;
-            nav_engine.add_tile(&end_tile.0, &end_tile.1)?;
-        }
 
         let (start_poly, start_pos) = self.find_nearest_poly(input_start)?;
         let (end_poly, end_pos) = self.find_nearest_poly(input_end)?;
@@ -391,7 +360,7 @@ impl<'a> TrinityNavigator<'a> {
         )?;
 
         let smooth_path = self.find_smooth_path(&start_pos, &end_pos, poly_path)?;
-        log::info!(
+        println!(
             "[TrinityNavigator] Successfully generated path of len: {}",
             smooth_path.len()
         );
@@ -401,15 +370,13 @@ impl<'a> TrinityNavigator<'a> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    pretty_env_logger::formatted_builder()
-        .filter_level(LevelFilter::Info)
-        .init();
-
     let mut query_filter = QueryFilter::new();
     query_filter.set_include_flags(1 | 8 | 4 | 2);
     query_filter.set_exclude_flags(0);
 
-    let navigator = TrinityNavigator::new(query_filter)?;
+    let mut nav_engine = TrinityNavEngine::new(TrinityDataProvider { map_id: 530 })?;
+    let nav_mesh_query = nav_engine.create_query(2048)?;
+    let navigator = TrinityNavigator::initialize(nav_mesh_query, query_filter)?;
 
     // Simple path
     // Shat Bridge (35,22) -> (35, 22)
@@ -429,39 +396,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Terrokar (35,22) -> (35, 23)
     let start_position = Vector::from_xyz(-2051.9, 4350.97, 2.25);
     let end_position = Vector::from_xyz(-1916.12, 4894.67, 2.21);
+    let start_tile = TrinityNavigator::world_to_trinity(start_position.x, start_position.y);
+    let end_tile = TrinityNavigator::world_to_trinity(end_position.x, end_position.y);
+    nav_engine.add_tile(&start_tile.0, &start_tile.1)?;
+    nav_engine.add_tile(&end_tile.0, &end_tile.1)?;
     navigator.find_path(&start_position, &end_position)?;
-    // path.iter().for_each(|position| info!("{:?}", position));
-    // Terrokar
-
-    extern "C" fn frand() -> f32 {
-        let mut rng = rand::thread_rng();
-        rng.gen::<f32>()
-    }
-
-    match navigator
-        .query
-        .find_random_point(frand, &navigator.query_filter)
-    {
-        Ok((poly_ref, pos)) => {
-            log::info!("Random Position: {:?} {:?}", poly_ref, pos);
-
-            let points = navigator.query.find_polys_around_circle(
-                poly_ref,
-                &pos,
-                25.0,
-                &navigator.query_filter,
-                256,
-            )?;
-
-            for (poly_ref, parent_ref, cost) in points.iter() {
-                log::info!("Poly {:?} {:?} {}", poly_ref, parent_ref, cost);
-            }
-        }
-        Err(err) => log::warn!("Random Position Err: {:#?}", err),
-    };
-
-    // Cross zones
-    // ...
 
     Ok(())
 }

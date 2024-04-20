@@ -3,24 +3,22 @@ name = "divert"
 version = "0.5.0"
 edition = "2021"
 description = "Rust Lang bindings for Recast Navigation"
-homepage = "https://github.com/0xFounders/divert"
-repository = "https://github.com/0xFounders/divert"
+homepage = "https://github.com/ohchase/divert"
+repository = "https://github.com/ohchase/divert"
 license = "Zlib"
 
 [lib]
 crate-type = ["lib"]
 
 [dependencies]
-bitflags = "1.3"
-thiserror = "1.0.31"
-log = "0.4.17"
-recastnavigation-sys = {version = "1.0.1", features = ["detour_large_nav_meshes"]}
+bitflags = "2.5.0"
+thiserror = "1.0.58"
+recastnavigation-sys = { version = "1.0.3", features = [
+    "detour_large_nav_meshes",
+] }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dev-dependencies]
 byteorder = "1.4.3"
-log = "0.4.16"
-pretty_env_logger = "0.4.0"
-lazy_static = "1.4.0"
 thiserror = "1.0.37"
 rand = "0.8.5"
