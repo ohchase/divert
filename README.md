@@ -1,7 +1,8 @@
+# Divert
 [![Actions Status](https://github.com/ohchase/divert/workflows/Continuous%20integration/badge.svg)](https://github.com/ohchase/divert/actions)
 [![Crate](https://img.shields.io/crates/v/divert.svg)](https://crates.io/crates/divert)
+![Crates.io License](https://img.shields.io/crates/l/divert)
 
-# Divert
 Rust bindings for [Recast Navigation](https://github.com/recastnavigation/recastnavigation).
 
 ## Purpose
